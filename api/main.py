@@ -1,68 +1,39 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 import pandas as pd
-from pathlib import Path
 
-# Le dossier data se trouve un niveau au-dessus de /api
-ROOT_DIR = Path(__file__).parent.parent
-DATA_DIR = ROOT_DIR / "data"
+app = FastAPI(title="SportMetrics API")
 
-app = FastAPI(title="SportMetrics API", version="1.0")
-
-def load_data():
-    """Charge tous les fichiers CSV"""
-    training = pd.read_csv(DATA_DIR / "team_training_sessions.csv")
-    games = pd.read_csv(DATA_DIR / "team_games_dataset.csv")
-    players_stats = pd.read_csv(DATA_DIR / "team_players_stats.csv")
-    players_info = pd.read_csv(DATA_DIR / "team_players_personal_info.csv")
-    boxscores = pd.read_csv(DATA_DIR / "team_boxscores.csv")
-    return {
-        "training": training,
-        "games": games,
-        "players_stats": players_stats,
-        "players_info": players_info,
-        "boxscores": boxscores
-    }
-
-DATA = load_data()
-
+# === ROUTE DE TEST ===
 @app.get("/health")
-def health():
-    """Vérifie que l'API fonctionne et que les données sont chargées"""
-    return {
-        "status": "ok",
-        "players": len(DATA["players_info"]),
-        "games": len(DATA["games"]),
-        "trainings": len(DATA["training"])
-    }
+def health_check():
+    return {"status": "ok"}
 
-@app.get("/players")
-def get_players(limit: int = 5):
-    """Liste les joueurs"""
-    df = DATA["players_info"]
-    return df.head(limit).to_dict(orient="records")
-
-@app.get("/games")
-def get_games(limit: int = 5):
-    """Liste les matchs"""
-    df = DATA["games"]
-    return df.head(limit).to_dict(orient="records")
-
-@app.get("/players/{player_id}")
-def get_player(player_id: int):
-    """Détail d'un joueur"""
-    df = DATA["players_info"]
-    if "PLAYER_ID" not in df.columns:
-        raise HTTPException(status_code=500, detail="Colonne PLAYER_ID manquante")
-    player = df[df["PLAYER_ID"] == player_id]
-    if player.empty:
-        raise HTTPException(status_code=404, detail="Joueur introuvable")
-    return player.iloc[0].to_dict()
-@app.get("/trainings")
-def get_trainings():
-    df = pd.read_csv("data/team_training_sessions.csv")
+# === 1. team_boxscores.csv ===
+@app.get("/team_boxscores")
+def get_team_boxscores():
+    df = pd.read_csv("data/team_boxscores.csv")
     return df.to_dict(orient="records")
 
-@app.get("/stats")
-def get_stats():
+# === 2. team_games_dataset.csv ===
+@app.get("/team_games_dataset")
+def get_team_games_dataset():
+    df = pd.read_csv("data/team_games_dataset.csv")
+    return df.to_dict(orient="records")
+
+# === 3. team_players_personal_info.csv ===
+@app.get("/team_players_personal_info")
+def get_team_players_personal_info():
+    df = pd.read_csv("data/team_players_personal_info.csv")
+    return df.to_dict(orient="records")
+
+# === 4. team_players_stats.csv ===
+@app.get("/team_players_stats")
+def get_team_players_stats():
     df = pd.read_csv("data/team_players_stats.csv")
+    return df.to_dict(orient="records")
+
+# === 5. team_training_sessions.csv ===
+@app.get("/team_training_sessions")
+def get_team_training_sessions():
+    df = pd.read_csv("data/team_training_sessions.csv")
     return df.to_dict(orient="records")
