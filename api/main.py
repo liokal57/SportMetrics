@@ -57,3 +57,12 @@ def get_player(player_id: int):
     if player.empty:
         raise HTTPException(status_code=404, detail="Joueur introuvable")
     return player.iloc[0].to_dict()
+@app.get("/trainings")
+def get_trainings():
+    df = pd.read_csv("data/team_training_sessions.csv")
+    return df.to_dict(orient="records")
+
+@app.get("/stats")
+def get_stats():
+    df = pd.read_csv("data/team_players_stats.csv")
+    return df.to_dict(orient="records")
