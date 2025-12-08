@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from pathlib import Path
 import pandas as pd
+import numpy as np
 
 app = FastAPI(
     title="SportMetrics API",
-    version="1.0",
-    description="API de lecture des CSV SportMetrics",
+    version="1.1",
+    description="API de lecture des CSV SportMetrics (avec gestion des NaN)",
 )
 
 # Dossier du projet (SportMetrics) puis dossier data/
@@ -19,16 +20,27 @@ def read_csv(filename: str) -> pd.DataFrame:
     Si ça plante, on renvoie une erreur HTTP claire.
     """
     path = DATA_DIR / filename
-
     try:
-        # encodage typique des fichiers CSV enregistrés depuis Excel en français
-        return pd.read_csv(path, encoding="latin-1")
-        # Si vraiment besoin, on pourrait tester "cp1252" ou ajouter sep=";"
+        df = pd.read_csv(path, encoding="latin-1")
+
+        # Nettoyage : remplacer les NaN et inf par None pour compatibilité JSON
+        df = df.replace([np.inf, -np.inf], np.nan)
+        df = df.where(pd.notnull(df), None)
+
+        return df
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Erreur lors de la lecture du fichier {path.name} : {e}",
         )
+
+
+def df_to_json_records(df: pd.DataFrame, limit: int = 100):
+    """
+    Transforme un DataFrame en liste de dictionnaires JSON-compatibles.
+    """
+    return df.head(limit).to_dict(orient="records")
 
 
 # ---------- ROUTE DE SANTÉ ----------
@@ -39,56 +51,38 @@ def health_check():
     return {"status": "ok"}
 
 
-# ---------- CSV 1 : team_boxscores.csv ----------
+# ---------- ROUTES CSV ----------
 
 @app.get("/team_boxscores")
 def get_team_boxscores(limit: int = 100):
-    """
-    Retourne les boxscores de l'équipe.
-    """
+    """Retourne les boxscores de l'équipe."""
     df = read_csv("team_boxscores.csv")
-    return df.head(limit).to_dict(orient="records")
+    return df_to_json_records(df, limit)
 
-
-# ---------- CSV 2 : team_games_dataset.csv ----------
 
 @app.get("/team_games_dataset")
 def get_team_games_dataset(limit: int = 100):
-    """
-    Retourne les données des matchs.
-    """
+    """Retourne les données des matchs."""
     df = read_csv("team_games_dataset.csv")
-    return df.head(limit).to_dict(orient="records")
+    return df_to_json_records(df, limit)
 
-
-# ---------- CSV 3 : team_players_personal_info.csv ----------
 
 @app.get("/team_players_personal_info")
 def get_team_players_personal_info(limit: int = 100):
-    """
-    Retourne les informations personnelles des joueurs.
-    """
+    """Retourne les infos personnelles des joueurs."""
     df = read_csv("team_players_personal_info.csv")
-    return df.head(limit).to_dict(orient="records")
+    return df_to_json_records(df, limit)
 
-
-# ---------- CSV 4 : team_players_stats.csv ----------
 
 @app.get("/team_players_stats")
 def get_team_players_stats(limit: int = 100):
-    """
-    Retourne les statistiques des joueurs.
-    """
+    """Retourne les statistiques des joueurs."""
     df = read_csv("team_players_stats.csv")
-    return df.head(limit).to_dict(orient="records")
+    return df_to_json_records(df, limit)
 
-
-# ---------- CSV 5 : team_training_sessions.csv ----------
 
 @app.get("/team_training_sessions")
 def get_team_training_sessions(limit: int = 100):
-    """
-    Retourne les sessions d'entraînement.
-    """
+    """Retourne les sessions d'entraînement."""
     df = read_csv("team_training_sessions.csv")
-    return df.head(limit).to_dict(orient="records")
+    return df_to_json_records(df, limit)
