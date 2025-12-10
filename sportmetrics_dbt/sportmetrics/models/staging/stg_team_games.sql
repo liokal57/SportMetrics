@@ -1,9 +1,7 @@
 {{ config(materialized='view') }}
 
 select
-    cast(Team_ID as string)                    as team_id,
-    cast(Game_ID as string)                    as game_id,
-
+ 
     GAME_DATE                                   as game_date,
     MATCHUP                                     as matchup,
     WL                                          as win_loss,
