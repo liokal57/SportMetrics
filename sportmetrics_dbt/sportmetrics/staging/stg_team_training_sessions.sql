@@ -1,65 +1,59 @@
 {{ config(materialized='view') }}
 
-select
-    cast(Session_ID as string)                as session_id,
-    cast(Player_ID as string)                 as player_id,
-    Player_Name                               as player_name,
-    Session_Date                              as session_date,
-    Days_Before_Match                         as days_before_match,
-    Next_Match_Date                           as next_match_date,
-    cast(Next_Match_ID as string)             as next_match_id,
+with raw as (
+    select distinct
+        Session_ID                                 as session_id,
+        cast(PLAYER_ID as int64)                   as player_id,
+        PLAYER_NAME                                as player_name,
+        SAFE.PARSE_DATE('%Y-%m-%d', Session_Date)  as session_date,
 
-    -- Player physical info
-    Age                                       as age,
-    Height_cm                                 as height_cm,
-    Weight_kg                                 as weight_kg,
-    Position                                  as position,
+        cast(Days_Before_Match as int64)           as days_before_match,
+        SAFE.PARSE_DATE('%Y-%m-%d', Next_Match_Date) as next_match_date,
+        cast(Next_Match_ID as int64)               as next_match_id,
 
-    -- Training info
-    Exercise_Type                             as exercise_type,
-    Duration_min                              as duration_min,
+        cast(Age as float64)                       as age,
+        cast(Height_cm as float64)                 as height_cm,
+        cast(Weight_kg as float64)                 as weight_kg,
 
-    -- Physiological metrics
-    Heart_Rate                                as heart_rate,
-    Respiratory_Rate                          as respiratory_rate,
-    Body_Temperature                          as body_temperature,
+        Position                                   as position,
+        Exercise_Type                              as exercise_type,
+        cast(Duration_min as int64)                as duration_min,
+        cast(Heart_Rate as int64)                  as heart_rate,
+        cast(Respiratory_Rate as int64)            as respiratory_rate,
+        cast(Body_Temperature as float64)          as body_temperature,
 
-    -- Accelerometer
-    Accel_X                                   as accel_x,
-    Accel_Y                                   as accel_y,
-    Accel_Z                                   as accel_z,
+        cast(Accel_X as float64)                   as accel_x,
+        cast(Accel_Y as float64)                   as accel_y,
+        cast(Accel_Z as float64)                   as accel_z,
+        cast(Gyro_X as float64)                    as gyro_x,
+        cast(Gyro_Y as float64)                    as gyro_y,
+        cast(Gyro_Z as float64)                    as gyro_z,
 
-    -- Gyroscope
-    Gyro_X                                    as gyro_x,
-    Gyro_Y                                    as gyro_y,
-    Gyro_Z                                    as gyro_z,
+        cast(Steps as int64)                       as steps,
+        cast(Strength_Score as float64)            as strength_score,
+        cast(Agility_sec as float64)               as agility_sec,
+        cast(Endurance_Score as float64)           as endurance_score,
+        cast(Jump_Height_cm as float64)            as jump_height_cm,
 
-    -- Movement
-    Steps                                     as steps,
+        cast(Shooting_Accuracy__ as float64)       as shooting_accuracy_pct,
+        cast(Dribbling_Speed_sec as float64)       as dribbling_speed_sec,
+        cast(Passing_Accuracy__ as float64)        as passing_accuracy_pct,
 
-    -- Performance metrics
-    Strength_Score                            as strength_score,
-    Agility_sec                               as agility_sec,
-    Endurance_Score                           as endurance_score,
-    Jump_Height_cm                             as jump_height_cm,
-    Shooting_Accuracy__                       as shooting_accuracy_pct,
-    Dribbling_Speed_sec                       as dribbling_speed_sec,
-    Passing_Accuracy__                        as passing_accuracy_pct,
-    Defense_Rating                            as defense_rating,
+        cast(Defense_Rating as float64)            as defense_rating,
+        cast(Focus_Level as float64)               as focus_level,
+        cast(Weekly_Training_Hours as float64)     as weekly_training_hours,
+        cast(Load_Intensity_Score as float64)      as load_intensity_score,
+        cast(Fatigue_Level as float64)             as fatigue_level,
+        cast(Injury_Risk as float64)               as injury_risk,
+        Injury_Risk_Level                          as injury_risk_level,
+        cast(Recovery_Time_hours as float64)       as recovery_time_hours,
+        cast(Performance_Score as float64)         as performance_score,
 
-    -- Additional metrics
-    Focus_Level                               as focus_level,
-    Weekly_Training_Hours                     as weekly_training_hours,
-    Load_Intensity_Score                      as load_intensity_score,
-    Fatigue_Level                             as fatigue_level,
-    Injury_Risk                               as injury_risk,
-    Injury_Risk_Level                         as injury_risk_level,
-    Recovery_Time_hours                       as recovery_time_hours,
-    Performance_Score                          as performance_score,
+        Team                                       as team_name,
+        Team_Code                                  as team_code,
+        Season                                     as season
+    from {{ source('foufous_de_sochaux', 'team_training_sessions') }}
+)
 
-    -- Team info
-    Team                                      as team,
-    Team_Code                                 as team_code,
-    Season                                    as season
-
-from {{ source('foufous_de_sochaux', 'team_training_sessions') }}
+select *
+from raw

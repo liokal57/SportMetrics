@@ -4,7 +4,8 @@ config-version: 2
 
 profile: 'sportmetrics'
 
-model-paths: ["models"]
+model-paths: ["sportmetrics"]
+
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
 seed-paths: ["seeds"]
