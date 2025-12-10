@@ -1,43 +1,38 @@
 {{ config(materialized='view') }}
 
-select
-    cast(GAME_ID as string)                      as game_id,
-    cast(TEAM_ID as string)                      as team_id,
+WITH base AS (
+    SELECT DISTINCT
+        CAST(GAME_ID AS STRING) AS game_id,
+        CAST(TEAM_ID AS STRING) AS team_id,
+        TEAM_NAME,
+        TEAM_ABBREVIATION,
+        TEAM_CITY,
 
-    TEAM_NAME                                     as team_name,
-    TEAM_ABBREVIATION                             as team_abbreviation,
-    TEAM_CITY                                      as team_city,
+        CASE
+            WHEN REGEXP_CONTAINS(MIN, r':') THEN SAFE_CAST(SPLIT(MIN, ':')[OFFSET(0)] AS INT64)
+            ELSE SAFE_CAST(MIN AS INT64)
+        END AS minutes_played,
 
-    -- Playing time
-    MIN                                           as minutes_played,
+        SAFE_CAST(FGM AS INT64) AS fgm,
+        SAFE_CAST(FGA AS INT64) AS fga,
+        SAFE_CAST(FG_PCT AS FLOAT64) AS fg_pct,
+        SAFE_CAST(FG3M AS INT64) AS fg3m,
+        SAFE_CAST(FG3A AS INT64) AS fg3a,
+        SAFE_CAST(FG3_PCT AS FLOAT64) AS fg3_pct,
+        SAFE_CAST(FTM AS INT64) AS ftm,
+        SAFE_CAST(FTA AS INT64) AS fta,
+        SAFE_CAST(FT_PCT AS FLOAT64) AS ft_pct,
+        SAFE_CAST(OREB AS INT64) AS oreb,
+        SAFE_CAST(DREB AS INT64) AS dreb,
+        SAFE_CAST(REB AS INT64) AS reb,
+        SAFE_CAST(AST AS INT64) AS ast,
+        SAFE_CAST(STL AS INT64) AS stl,
+        SAFE_CAST(BLK AS INT64) AS blk,
+        SAFE_CAST(TO AS INT64)  AS turnovers,
+        SAFE_CAST(PF AS INT64)  AS personal_fouls,
+        SAFE_CAST(PTS AS INT64) AS pts,
+        SAFE_CAST(PLUS_MINUS AS INT64) AS plus_minus
+    FROM {{ source('foufous_de_sochaux','team_boxscores') }}
+)
 
-    -- Shooting efficiency
-    FGM                                           as field_goals_made,
-    FGA                                           as field_goal_attempts,
-    FG_PCT                                        as field_goal_pct,
-
-    FG3M                                          as three_point_made,
-    FG3A                                          as three_point_attempts,
-    FG3_PCT                                       as three_point_pct,
-
-    FTM                                           as free_throws_made,
-    FTA                                           as free_throw_attempts,
-    FT_PCT                                        as free_throw_pct,
-
-    -- Rebounds
-    OREB                                          as offensive_rebounds,
-    DREB                                          as defensive_rebounds,
-    REB                                           as total_rebounds,
-
-    -- Playmaking & defense
-    AST                                           as assists,
-    STL                                           as steals,
-    BLK                                           as blocks,
-    'TO'                                            as turnovers,
-    PF                                            as personal_fouls,
-
-    -- Scoring & impact
-    PTS                                           as points,
-    PLUS_MINUS                                     as plus_minus
-
-from {{ source('foufous_de_sochaux', 'team_boxscores') }}
+SELECT * FROM base;

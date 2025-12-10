@@ -1,47 +1,45 @@
 {{ config(materialized='view') }}
 
-select
-    -- Keys
-    TEAM_ID                                    as team_id,
-    GAME_ID                                    as game_id,
+WITH base AS (
+    SELECT DISTINCT
+        CAST(Team_ID AS STRING)   AS team_id,
+        CAST(Game_ID AS STRING)   AS game_id,
 
-    -- Game metadata
-    GAME_DATE                                   as game_date,
-    MATCHUP                                     as matchup,
-    WL                                          as win_loss,
-    W                                           as wins,
-    L                                           as losses,
-    W_PCT                                       as win_pct,
+        SAFE.PARSE_DATE('%b %d, %Y', GAME_DATE) AS game_date,
+        TRIM(MATCHUP)                          AS matchup,
+        UPPER(WL)                              AS win_loss,
 
-    -- Playing time
-    MIN                                         as minutes_played,
+        SAFE_CAST(W AS INT64)     AS wins,
+        SAFE_CAST(L AS INT64)     AS losses,
+        SAFE_CAST(W_PCT AS FLOAT64) AS win_pct,
 
-    -- Shooting
-    FGM                                         as field_goals_made,
-    FGA                                         as field_goal_attempts,
-    FG_PCT                                      as field_goal_pct,
+        -- Convert MIN (ex: "240") or "240:00:00"
+        CASE
+            WHEN REGEXP_CONTAINS(MIN, r':') THEN
+                SAFE_CAST(SPLIT(MIN, ':')[OFFSET(0)] AS INT64)
+            ELSE
+                SAFE_CAST(MIN AS INT64)
+        END AS minutes_played,
 
-    FG3M                                        as three_point_made,
-    FG3A                                        as three_point_attempts,
-    FG3_PCT                                     as three_point_pct,
+        SAFE_CAST(FGM AS INT64) AS fgm,
+        SAFE_CAST(FGA AS INT64) AS fga,
+        SAFE_CAST(FG_PCT AS FLOAT64) AS fg_pct,
+        SAFE_CAST(FG3M AS INT64) AS fg3m,
+        SAFE_CAST(FG3A AS INT64) AS fg3a,
+        SAFE_CAST(FG3_PCT AS FLOAT64) AS fg3_pct,
+        SAFE_CAST(FTM AS INT64) AS ftm,
+        SAFE_CAST(FTA AS INT64) AS fta,
+        SAFE_CAST(FT_PCT AS FLOAT64) AS ft_pct,
+        SAFE_CAST(OREB AS INT64) AS oreb,
+        SAFE_CAST(DREB AS INT64) AS dreb,
+        SAFE_CAST(REB AS INT64) AS reb,
+        SAFE_CAST(AST AS INT64) AS ast,
+        SAFE_CAST(STL AS INT64) AS stl,
+        SAFE_CAST(BLK AS INT64) AS blk,
+        SAFE_CAST(TOV AS INT64) AS tov,
+        SAFE_CAST(PF AS INT64) AS pf,
+        SAFE_CAST(PTS AS INT64) AS pts
+    FROM {{ source('foufous_de_sochaux','team_games') }}
+)
 
-    FTM                                         as free_throws_made,
-    FTA                                         as free_throw_attempts,
-    FT_PCT                                      as free_throw_pct,
-
-    -- Rebounds
-    OREB                                        as offensive_rebounds,
-    DREB                                        as defensive_rebounds,
-    REB                                         as total_rebounds,
-
-    -- Playmaking & defense
-    AST                                         as assists,
-    STL                                         as steals,
-    BLK                                         as blocks,
-    TOV                                         as turnovers,
-    PF                                          as personal_fouls,
-
-    -- Scoring
-    PTS                                         as points
-
-from {{ source('foufous_de_sochaux', 'team_games') }}
+SELECT * FROM base;
