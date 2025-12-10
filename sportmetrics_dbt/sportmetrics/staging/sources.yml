@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: foufous_de_sochaux
+    schema: Foufous_de_Sochaux
+    description: "Raw tables imported from Airbyte for Foufous de Sochaux"
+
+    tables:
+      - name: players_personal_info
+      - name: players_stats
+      - name: team_boxscores
+      - name: team_games
+      - name: team_training_sessions
