@@ -1,7 +1,11 @@
 {{ config(materialized='view') }}
 
 select
- 
+    -- Keys
+    TEAM_ID                                    as team_id,
+    GAME_ID                                    as game_id,
+
+    -- Game metadata
     GAME_DATE                                   as game_date,
     MATCHUP                                     as matchup,
     WL                                          as win_loss,
