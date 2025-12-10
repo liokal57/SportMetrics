@@ -2,8 +2,8 @@ version: 2
 
 sources:
   - name: foufous_de_sochaux
-    database: sportmetrics-480616        # Ton projet BigQuery
-    schema: Foufous_de_Sochaux          # Dataset exact (sensible à la casse !)
+    database: sportmetrics-480616        
+    schema: Foufous_de_Sochaux          
 
     tables:
 
@@ -46,3 +46,4 @@ sources:
             tests: [not_null, unique]
           - name: Player_ID
             tests: [not_null]
+
