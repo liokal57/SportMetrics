@@ -1,0 +1,49 @@
+version: 2
+
+sources:
+  - name: foufous_de_sochaux
+    database: sportmetrics-480616        
+    schema: Foufous_de_Sochaux          
+
+    tables:
+
+      - name: players_personal_info
+        description: "Informations personnelles et biographiques des joueurs"
+        columns:
+          - name: PLAYER_ID
+            tests: [not_null, unique]
+          - name: PLAYER_NAME
+            tests: [not_null]
+
+      - name: players_stats
+        description: "Statistiques des joueurs match par match"
+        columns:
+          - name: PLAYER_ID
+            tests: [not_null]
+          - name: GAME_ID
+            tests: [not_null]
+
+      - name: team_boxscores
+        description: "Boxscores match par match de l'équipe"
+        columns:
+          - name: GAME_ID
+            tests: [not_null]
+          - name: TEAM_ID
+            tests: [not_null]
+
+      - name: team_games
+        description: "Informations des matchs joués par l'équipe"
+        columns:
+          - name: Game_ID
+            tests: [not_null, unique]
+          - name: Team_ID
+            tests: [not_null]
+
+      - name: team_training_sessions
+        description: "Historique des séances d'entraînement"
+        columns:
+          - name: Session_ID
+            tests: [not_null, unique]
+          - name: Player_ID
+            tests: [not_null]
+
